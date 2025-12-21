@@ -86,8 +86,8 @@
         <div class="spacer"></div>
         <button id="flipRandBtn" class="chip">🔀</button>
         <button id="flipMoveBtn" class="chip">➤</button>
-        <button id="flipSearchBtn" class="chip">🔎</button>
         <button id="flipAutoBtn" class="chip">🤖</button>
+        <button id="flipPlusBtn" class="chip">📄</button>
         <button id="flipFontPlus" class="chip">➕</button>
         <button id="flipFontMinus" class="chip">➖</button>
       </div>
@@ -126,8 +126,8 @@
         <div class="spacer"></div>
         <button id="curRandBtn" class="chip">🔀</button>
         <button id="curMoveBtn" class="chip">➤</button>
-        <button id="curSearchBtn" class="chip">🔎</button>
         <button id="curAutoBtn" class="chip">🤖</button>
+        <button id="curPlusBtn" class="chip">📄</button>
       </div>
     
       <!-- 본문: 위/아래 1:1, 오른쪽에 각각 폰트 ± -->
@@ -137,8 +137,8 @@
           <!-- 위쪽 버튼 세트 -->
           <div class="cur-fontcol cur-fontcol-top">
             <div class="font-group top-group">
-              <button id="curTopPlus" class="chip">➕</button>
-              <button id="curTopMinus" class="chip">➖</button>
+              <button id="curTopPlus" class="fontBt chip">➕</button>
+              <button id="curTopMinus" class="fontBt chip">➖</button>
             </div>
           </div>
         </div> 
@@ -149,8 +149,8 @@
           <!-- 아래쪽 버튼 세트 -->
           <div class="cur-fontcol cur-fontcol-bottom">
             <div class="font-group bottom-group">
-              <button id="curBottomPlus" class="curBottomFont chip">➕</button>
-              <button id="curBottomMinus" class="curBottomFont chip">➖</button>
+              <button id="curBottomPlus" class="fontBt chip">➕</button>
+              <button id="curBottomMinus" class="fontBt chip">➖</button>
             </div>
           </div>
         </div>
@@ -180,8 +180,8 @@
         <div class="spacer"></div>
         <button id="memRandBtn" class="chip">🔀</button>
         <button id="memMoveBtn" class="chip">➤</button>
-        <button id="memSearchBtn" class="chip">🔎</button>
         <button id="memAutoBtn" class="chip">🤖</button>
+        <button id="memPlusBtn" class="chip">📄</button>
       </div>
 
       <div class="mem-wrap">
@@ -214,11 +214,11 @@
   <div id="settingsPopup" class="popup settings-popup">
     <div class="popup-content">
       <h2>⚙️ 설정</h2>
-      <button id="popupResetBtn" class="btn">🔄 모든 데이터 초기화</button>
-      <button id="openOrderBtn" class="btn">🔀 순서 바꾸기</button>
-      <button id="popupInvertBtn" class="btn">☯ 색 반전 모드</button>
-      <button id="popupStorageBtn" class="btn">💾 로컬 사용량 확인</button>
-      <button id="popupBackupBtn" class="btn">.TXT로 추출하기</button>
+      <button id="popupResetBtn" class="setBtn">🔄 모든 데이터 초기화</button>
+      <button id="openOrderBtn" class="setBtn">🔀 순서 바꾸기</button>
+      <button id="popupInvertBtn" class="setBtn">☯ 색 반전 모드</button>
+      <button id="popupStorageBtn" class="setBtn">💾 로컬 사용량 확인</button>
+      <button id="popupBackupBtn" class="setBtn">.TXT로 추출하기</button>
     </div>
   </div>
 
@@ -246,7 +246,7 @@
     </div>
   </div>
 
-  <!-- 새 모달: 토픽 순서 변경 -->
+  <!-- 새 모달: 토픽 순서 변경
   <div id="orderModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="orderModalTitle">
     <div class="modal-inner">
       <h2 id="orderModalTitle">토픽 순서 변경</h2>
@@ -260,22 +260,56 @@
     </div>
   </div>
   
-  <!-- 모달을 닫는 배경(선택사항) -->
-  <div id="orderModalBackdrop" class="modal-backdrop hidden"></div>
+  <div id="orderModalBackdrop" class="modal-backdrop hidden"></div> -->
 
 
   <!-- Move 팝업 -->
   <div id="movePopup" class="movePopup" style="display:none;">
     <div class="movePopupPanel">
-      <div class="movePopuTitle">번호 이동</div>
-  
-      <input id="moveInput" class="movePopupInput" type="number" placeholder="번호 입력" />
+
+      <div class="movePopupActions" style="margin: 5px 0 10px;">
+        <div class="movePopuTitle">번호 이동 / 텍스트 검색</div>
+        <button id="moveCancel" class="btn" style="margin-left: 20%; background-color: rgb(33, 0, 21) !important; color: #ffffff !important; font-weight: bold;">닫기</button>
+      </div>
+
+      <br>
+
+      <input id="moveInput" class="movePopupInput" type="number">
   
       <div class="movePopupActions" style="margin-top:12px;">
         <button id="moveJump" class="btn">- 10</button>
         <button id="moveSuperJump" class="btn">- 20</button>
         <button id="moveOk" class="btn btn-primary">이동</button>
-        <button id="moveCancel" class="btn">취소</button>
+        
+      </div>
+      <br><hr><br>
+
+      <input id="moveSearchInput" class="namingPopup__input" placeholder="검색어(띄어쓰기 무관)" />
+
+      <div class="movePopupActions" style="margin-top:12px;">  
+        <button id="moveSearchGo" class="btn">검색</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auto 팝업 -->
+  <div id="autoPopup" class="namingPopup" style="display:none;">
+    <div class="movePopupPanel">
+
+      <div class="movePopupActions" style="margin: 5px 0 10px;">
+        <div class="movePopuTitle">오토 모드</div>
+        <button id="qysmAutoCancel" class="btn" style="margin-left: 50%; background-color: rgb(33, 0, 21) !important; color: #ffffff !important; font-weight: bold;">닫기</button>
+      </div>
+      
+      <br>
+
+      <input class="movePopupInput" id="qysmAutoSecs" inputmode="number" placeholder="초단위의 정수를 입력하세요" />
+
+      <div class="movePopupActions">
+        <button id="autoTwo" class="btn">2s</button>
+        <button id="autoThree" class="btn">3s</button>
+        <button id="autoFive" class="btn">5s</button>
+        <button class="btn btn-primary" id="qysmAutoOk">시작</button>
       </div>
     </div>
   </div>

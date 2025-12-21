@@ -26,7 +26,7 @@ const flipTopicName = document.getElementById('flipTopicName');
 const flipIndexLabel = document.getElementById('flipIndexLabel');
 const flipHomeBtn = document.getElementById('flipHomeBtn');
 const flipMoveBtn = document.getElementById('flipMoveBtn');
-const flipSearchBtn = document.getElementById('flipSearchBtn');
+const flipPlusBtn = document.getElementById('flipPlusBtn');
 const flipAutoBtn = document.getElementById('flipAutoBtn');
 const flipHintBtn = document.getElementById('flipHintBtn');   // 후술
 const flipEditBtn = document.getElementById('flipEditBtn');
@@ -53,7 +53,7 @@ const curBottomPlus = document.getElementById('curBottomPlus');
 const curBottomMinus = document.getElementById('curBottomMinus');
 
 const curMoveBtn = document.getElementById('curMoveBtn');
-const curSearchBtn = document.getElementById('curSearchBtn');
+const curPlusBtn = document.getElementById('curPlusBtn');
 const curAutoBtn = document.getElementById('curAutoBtn');
 const curHintBtn = document.getElementById('curHintBtn');
 const curEditBtn = document.getElementById('curEditBtn');
@@ -72,7 +72,7 @@ const memTopicName = document.getElementById('memTopicName');
 const memIndexLabel = document.getElementById('memIndexLabel');
 const memHomeBtn = document.getElementById('memHomeBtn');
 const memMoveBtn = document.getElementById('memMoveBtn');
-const memSearchBtn = document.getElementById('memSearchBtn');
+const memPlusBtn = document.getElementById('memPlusBtn');
 const memAutoBtn = document.getElementById('memAutoBtn');
 const memQuestion = document.getElementById('memQuestion');
 const memOptions = document.getElementById('memOptions');
@@ -585,7 +585,8 @@ flipMoveBtn.addEventListener('click', () => {
   openMovePopup(cards.length);
 });
 
-flipSearchBtn.addEventListener('click', () => openSearchPrompt('flip'));
+flipPlusBtn.addEventListener('click', () => { });
+
 flipStar.addEventListener('click', () => {
   const on = !isStarred(currentTopicId, flipIndex);
   setStar(currentTopicId, flipIndex, on);
@@ -730,7 +731,8 @@ curOpacityBtn.addEventListener('click', () => {
 });
 
 // 자리만: s/a/hint/연필/☆는 후술
-curSearchBtn.addEventListener('click', () => openSearchPrompt('curtain'));
+curPlusBtn.addEventListener('click', () => { });
+
 curStar.addEventListener('click', () => {
   const on = !isStarred(currentTopicId, curtainIndex);
   setStar(currentTopicId, curtainIndex, on);
@@ -791,10 +793,10 @@ function renderMemoryCard() {
 
     const qPlus = document.createElement('button');
     qPlus.textContent = '➕';
-    qPlus.className = 'chip';
+    qPlus.className = 'chip fontBt';
     const qMinus = document.createElement('button');
     qMinus.textContent = '➖';
-    qMinus.className = 'chip';
+    qMinus.className = 'chip fontBt';
 
     qFontControls.appendChild(qPlus);
     qFontControls.appendChild(qMinus);
@@ -951,7 +953,8 @@ memMoveBtn.addEventListener('click', () => {
 });
 
 // 자리만
-memSearchBtn.addEventListener('click', () => openSearchPrompt('memory'));
+memPlusBtn.addEventListener('click', () => { });
+
 memStar.addEventListener('click', () => {
   const on = !isStarred(currentTopicId, memoryIndex);
   setStar(currentTopicId, memoryIndex, on);
@@ -962,13 +965,13 @@ memStar.addEventListener('click', () => {
 });
 
 // ===== 렌더링 =====
-function clearWrap(){
-  wrap.querySelectorAll('.topic').forEach(el=>el.remove());
+function clearWrap() {
+  wrap.querySelectorAll('.topic-row').forEach(row => row.remove());
 }
 
 function render() {
   clearWrap();
-  for (const t of topics) {
+  topics.forEach((t, index) => {
     const el = document.createElement('div');
     el.className = 'topic';
     el.dataset.id = t.id;
@@ -996,7 +999,7 @@ function render() {
         showToast(`업로드 완료: ${pendingUploadCards.length}개`, 1500);
         awaitingUploadTarget = false;
         pendingUploadCards = null;
-        flipOpen(topicId, 1, 'f'); // 업로드 후 해당 디테일 뷰 열기로 바꾸기
+         //flipOpen(topicId, 1, 'f'); 업로드 후 해당 디테일 뷰 열기로 바꾸기
         return;
       }
 
@@ -1020,9 +1023,56 @@ function render() {
 
     el.appendChild(nameSpan);
     el.appendChild(editBtn);
-    wrap.appendChild(el);
-  }
+    // 🔹 row 생성
+    const row = document.createElement('div');
+    row.className = 'topic-row';
+
+    // 🔹 ▲ 버튼
+    const upBtn = document.createElement('button');
+    upBtn.className = 'topic-move up';
+    upBtn.textContent = '▲';
+    upBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      moveTopic(index, -1);
+    });
+
+    // 🔹 ▼ 버튼
+    const downBtn = document.createElement('button');
+    downBtn.className = 'topic-move down';
+    downBtn.textContent = '▼';
+    downBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      moveTopic(index, +1);
+    });
+
+    // 🔹 기존 el을 row 안으로
+    row.appendChild(upBtn);
+    row.appendChild(el);
+    row.appendChild(downBtn);
+
+    // 🔹 row를 wrap에 추가
+    wrap.appendChild(row);
+
+  });
   ensurePlaceholder();
+}
+
+function moveTopic(index, delta) {
+  const target = index + delta;
+
+  // 🔒 범위 보호
+  if (target < 0 || target >= topics.length) return;
+
+  // 🔄 배열 swap
+  const temp = topics[index];
+  topics[index] = topics[target];
+  topics[target] = temp;
+
+  // 💾 저장
+  saveState();
+
+  // 🔁 전체 재렌더
+  render();
 }
 
 // ===== 버튼 동작 =====
@@ -1200,6 +1250,22 @@ function highlightLoose(src, q) {
 
 /* ===== 검색 입력 팝업 ===== */
 let _searchPopup, _searchInput;
+
+moveSearchGo.addEventListener('click', () => {
+  runSearchDirect(window._moveMode, moveSearchInput.value);
+  closeMovePopup();
+});
+
+function runSearchDirect(mode, query) {
+  searchCtx.mode = mode;
+  searchCtx.topicId = currentTopicId;
+  const res = searchCards(searchCtx.topicId, mode, query);
+  if (!res.length) { showToast('검색 결과가 없습니다', 1200); return; }
+  if (res.length === 1) { goToSearchResult(res[0]); return; }
+  showToast(`중복 결과 ${res.length}건 — 이전/다음으로 선택`, 1200);
+  openDupPopup(query, res);
+}
+
 function openSearchPrompt(mode){
   searchCtx.mode = mode;
   searchCtx.topicId = currentTopicId;
@@ -1267,9 +1333,10 @@ function openDupPopup(q, results){
     _dupPopup.addEventListener('click', (e)=>{ if(e.target===_dupPopup) closeDupPopup(); });
     _dupPopup.querySelector('#qysmDupPrev').addEventListener('click', ()=>{ moveDup(-1); });
     _dupPopup.querySelector('#qysmDupNext').addEventListener('click', ()=>{ moveDup(+1); });
-    _dupPopup.querySelector('#qysmDupConfirm').addEventListener('click', ()=>{ const cur = searchCtx.results[searchCtx.pos]; closeDupPopup(); goToSearchResult(cur); });
+    _dupPopup.querySelector('#qysmDupConfirm').addEventListener('click', () => { const cur = searchCtx.results[searchCtx.pos]; closeDupPopup(); closeMovePopup(); goToSearchResult(cur); });
   }
   _dupPopup.style.display = 'flex';
+  _dupPopup.style.zIndex = '2000';
   document.body.classList.add('naming-open');
   renderDupView();
 }
@@ -1331,7 +1398,7 @@ const autoCtx = { running: false, paused: false, mode: null, topicId: null, i: 1
 function getModeRoot(mode) {
   return document.getElementById(mode === 'flip' ? 'flipScreen' : mode === 'curtain' ? 'curtainScreen' : 'memoryScreen');
 }
-function getCurrentIndex(mode) {
+function getAutoStartIndex(mode) {
   if (mode === 'flip') { const el = document.getElementById('flipIndexLabel'); return parseInt(el?.textContent || '1', 10) || 1; }
   if (mode === 'curtain') { const el = document.getElementById('curIndexLabel'); return parseInt(el?.textContent || '1', 10) || 1; }
   const el = document.getElementById('memIndexLabel'); return parseInt(el?.textContent || '1', 10) || 1;
@@ -1444,47 +1511,64 @@ function autoCycle() {
   }
 }
 
-/* 시작/프롬프트 */
-let _autoPopup, _autoInput;
+/* ===== 오토 입력 팝업 ===== */
+const _autoPopup = document.getElementById('autoPopup');
+const _autoInput = document.getElementById('qysmAutoSecs');
+
+let _autoMode = null; // 🔥 현재 모드 보관
+
 function openAutoPrompt(mode) {
-  if (!_autoPopup) {
-    _autoPopup = document.createElement('div');
-    _autoPopup.className = 'namingPopup';
-    _autoPopup.innerHTML = `
-      <div class="namingPopup__panel" role="dialog" aria-label="오토 설정">
-        <div class="namingPopup__title">오토 시간(초)</div>
-        <input class="namingPopup__input" id="qysmAutoSecs" inputmode="numeric" pattern="[0-9]*" placeholder="초단위의 정수를 입력하세요" />
-        <div class="namingPopup__actions">
-          <button class="btn" id="qysmAutoCancel">취소</button>
-          <button class="btn btn-primary" id="qysmAutoOk">확인</button>
-        </div>
-      </div>`;
-    document.body.appendChild(_autoPopup);
-    _autoInput = _autoPopup.querySelector('#qysmAutoSecs');
-    _autoPopup.addEventListener('click', (e) => { if (e.target === _autoPopup) closeAutoPrompt(); });
-    _autoPopup.querySelector('#qysmAutoCancel').addEventListener('click', closeAutoPrompt);
-    _autoPopup.querySelector('#qysmAutoOk').addEventListener('click', () => {
-      const n = parseInt(_autoInput.value, 10);
-      if (!Number.isFinite(n) || n <= 0) { showToast('양의 정수를 입력하세요', 1200); return; }
-      closeAutoPrompt();
-      startAuto(mode, n);
-    });
-  }
-  _autoInput.value = '';
+  _autoMode = mode; 
   _autoPopup.style.display = 'flex';
+  document.body.classList.add('naming-open');
+
   setTimeout(() => _autoInput.focus(), 0);
+
+  // 배경 클릭 닫기
+  _autoPopup.onclick = (e) => {
+    if (e.target === _autoPopup) closeAutoPrompt();
+  };
+
+  document.getElementById('qysmAutoCancel').onclick = closeAutoPrompt;
+
+  document.getElementById('qysmAutoOk').onclick = () => {
+    const n = parseInt(_autoInput.value, 10);
+    if (!Number.isFinite(n) || n <= 0) {
+      showToast('양의 정수를 입력하세요', 1200);
+      return;
+    }
+    closeAutoPrompt();
+    startAuto(mode, n);
+  };
 }
-function closeAutoPrompt() { if (_autoPopup) _autoPopup.style.display = 'none'; }
+
+function closeAutoPrompt() {
+  _autoPopup.style.display = 'none';
+  document.body.classList.remove('naming-open');
+}
+
 
 function startAuto(mode, seconds) {
-  autoStop();                                      // 기존 오토가 있으면 중지
-  autoCtx.running = true; autoCtx.paused = false;
-  autoCtx.mode = mode; autoCtx.topicId = (typeof currentTopicId !== 'undefined') ? currentTopicId : null;
-  autoCtx.i = getCurrentIndex(mode);
-  autoCtx.mainMs = seconds * 1000; autoCtx.revealMs = 1000;
+  autoStop(); // 기존 오토 중지
+
+  autoCtx.running = true;
+  autoCtx.paused = false;
+  autoCtx.mode = mode;
+  autoCtx.topicId = currentTopicId ?? null;
+
+  autoCtx.i =
+    mode === 'flip' ? flipIndex :
+      mode === 'curtain' ? curtainIndex :
+        mode === 'memory' ? memoryIndex :
+          1;
+
+  autoCtx.mainMs = seconds * 1000;
+  autoCtx.revealMs = 1000;
+
   showAutoControls(mode);
   autoCycle();
 }
+
 
 /* 홈 버튼시 모든 모드 종료 */
 document.addEventListener('click', (e) => {
@@ -1512,6 +1596,19 @@ document.addEventListener('click', (e) => {
 
   openAutoPrompt(mode);
 });
+
+const autoTwo = document.getElementById('autoTwo');
+const autoThree = document.getElementById('autoThree');
+const autoFive = document.getElementById('autoFive');
+
+function startAutoPreset(n) {
+  closeAutoPrompt();          // 팝업 닫고
+  startAuto(_autoMode, n);    // 🔥 즉시 실행
+}
+
+autoTwo?.addEventListener('click', () => startAutoPreset(2));
+autoThree?.addEventListener('click', () => startAutoPreset(3));
+autoFive?.addEventListener('click', () => startAutoPreset(5));
 
 /* ===== Random (R) ===== */
 const randState = { flip: {}, curtain: {}, memory: {} };
@@ -2065,36 +2162,52 @@ function cancelBackupSelection() {
   _backupTimer = null;
 }
 
-// 팝업의 백업 버튼 연결 (index.html에 추가된 id: popupBackupBtn 이어야 함)
+// ===============================
+// 백업 버튼 클릭 → 백업 선택 모드 진입
+// ===============================
 const popupBackupBtn = document.getElementById('popupBackupBtn');
 if (popupBackupBtn) {
   popupBackupBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    startBackupSelectionWindow(5000); // 5초
+    startBackupSelectionWindow(5000); // 5초간 백업 선택 모드
   });
 }
 
-// 메인 화면(토픽 리스트)에서 클릭을 감지하여 백업 모드일 때 처리
-// topicWrap은 토픽 버튼들을 포함하나, bookmarkBtn은 제외해야 함
+// ===============================
+// 메인 화면(토픽 리스트) 클릭 가로채기
+// - 백업 모드일 때는 기존 토픽 클릭 동작을 완전히 차단
+// - 반드시 capture 단계(true)에서 처리
+// ===============================
 const topicWrapEl = document.getElementById('topicWrap');
 if (topicWrapEl) {
   topicWrapEl.addEventListener('click', (e) => {
+    // 백업 선택 모드가 아니면 아무 것도 하지 않음
     if (!awaitingBackupSelection) return;
 
-    e.stopPropagation();    // 이벤트 전파 방지
-    e.preventDefault();     // 기본 동작(뷰 이동) 방지
+    // 🔥 기존 토픽 클릭 동작 완전 차단
+    e.preventDefault();
+    e.stopPropagation();
 
+    // 실제 토픽 버튼 탐색
     const topicEl = e.target.closest('.topic');
     if (!topicEl) return;
 
-    const tidAttr = topicEl.dataset && topicEl.dataset.id ? topicEl.dataset.id : null;
-    let selectedTopicId = tidAttr ? (isNaN(tidAttr) ? tidAttr : Number(tidAttr)) : null;
+    // -------------------------------
+    // 토픽 ID 식별
+    // -------------------------------
+    let selectedTopicId = null;
 
+    const tidAttr = topicEl.dataset?.id;
+    if (tidAttr != null) {
+      selectedTopicId = isNaN(tidAttr) ? tidAttr : Number(tidAttr);
+    }
+
+    // dataset.id가 없을 경우 이름으로 보조 탐색
     if (selectedTopicId == null) {
       const nameNode = topicEl.querySelector('.topic__name') || topicEl;
-      const name = (nameNode && nameNode.textContent) ? nameNode.textContent.trim() : null;
+      const name = nameNode?.textContent?.trim();
       if (name) {
-        const found = topics.find(x => (x.name || '').trim() === name);
+        const found = topics.find(t => (t.name || '').trim() === name);
         if (found) selectedTopicId = found.id;
       }
     }
@@ -2104,18 +2217,22 @@ if (topicWrapEl) {
       return;
     }
 
-    // 선택된 주제로 백업 수행
-    cancelBackupSelection();
+    // -------------------------------
+    // 백업 수행
+    // -------------------------------
+    cancelBackupSelection(); // 백업 선택 모드 종료
 
-    const t = topics.find(x => x.id === selectedTopicId); // ← 추가
+    const topic = topics.find(t => t.id === selectedTopicId);
     const text = makeBackupTextForTopic(selectedTopicId);
-    const topicName = t ? (t.name || 'topic') : String(selectedTopicId);
+    const topicName = topic ? (topic.name || 'topic') : String(selectedTopicId);
     const fname = `${safeFileName(topicName)}.txt`;
+
     downloadText(fname, text);
     showToast('백업 파일을 생성하였습니다', 1600);
-  });
 
+  }, true); // 🔥 반드시 capture = true
 }
+
 
 // ===== 키보드 네비게이션 (좌/우/위 화살표) =====
 document.addEventListener('keydown', (e) => {
@@ -2247,135 +2364,6 @@ function applyMove(n) {
   }
 }
 
-
-(function () {
-  function escapeHtml(s) { return (s + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-
-
-  // HTML5 drag-and-drop 간단 구현
-  let dragSrcEl = null;
-  function addDragHandlers(el) {
-    el.addEventListener('dragstart', ev => {
-      dragSrcEl = el;
-      ev.dataTransfer.effectAllowed = 'move';
-      try { ev.dataTransfer.setData('text/plain', el.dataset.id); } catch (e) { }
-      el.classList.add('dragging');
-    });
-
-
-    el.addEventListener('dragover', ev => {
-      ev.preventDefault(); // 필수
-      ev.dataTransfer.dropEffect = 'move';
-      const target = ev.currentTarget;
-      if (target && target !== dragSrcEl) target.classList.add('drag-over');
-    });
-
-
-    el.addEventListener('dragleave', ev => {
-      ev.currentTarget.classList.remove('drag-over');
-    });
-
-
-    el.addEventListener('drop', ev => {
-      ev.stopPropagation();
-      const target = ev.currentTarget;
-      if (dragSrcEl && target !== dragSrcEl) {
-        // 순서 바꾸기
-        const children = Array.from(orderList.children);
-        const srcIndex = children.indexOf(dragSrcEl);
-        const tgtIndex = children.indexOf(target);
-        if (srcIndex > -1 && tgtIndex > -1) {
-          if (srcIndex < tgtIndex) {
-            orderList.insertBefore(dragSrcEl, target.nextSibling);
-          } else {
-            orderList.insertBefore(dragSrcEl, target);
-          }
-        }
-      }
-      orderList.querySelectorAll('.drag-over').forEach(n => n.classList.remove('drag-over'));
-    });
-
-
-    el.addEventListener('dragend', ev => {
-      el.classList.remove('dragging');
-      orderList.querySelectorAll('.drag-over').forEach(n => n.classList.remove('drag-over'));
-    });
-
-
-    // 터치 대응: 간단한 터치 드래그 (모바일에서의 대체 경험 제공)
-    let touchStartY = 0;
-    el.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; el.classList.add('dragging'); }, { passive: true });
-    el.addEventListener('touchmove', e => { e.preventDefault(); }, { passive: false });
-    el.addEventListener('touchend', e => { el.classList.remove('dragging'); });
-  }
-
-
-  // 저장: 현재 리스트 순서의 data-id 배열을 localStorage에 기록
-  function saveOrder() {
-    const ids = Array.from(orderList.children).map(li => li.dataset.id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
-    applySavedOrderToDOM(ids);
-  }
-
-
-  // 저장된 순서를 실제 화면의 토픽 버튼 DOM에 적용
-  function applySavedOrderToDOM(savedIds) {
-    // 원래 토픽 버튼 컨테이너 찾기
-    const topicNodes = buildTopicList();
-    const idToNode = new Map(topicNodes.map(t => [t.id, t.node]));
-
-
-    // 가능한 토픽 컨테이너 (공통되는 부모) 찾기
-    // 모든 노드의 공통 부모를 추정하거나, 가장 먼저 찾은 노드의 parentNode 사용
-    if (topicNodes.length === 0) return;
-    const parent = topicNodes[0].node.parentNode;
-    if (!parent) return;
-
-
-    // 새로운 순서대로 해당 노드들을 parent에 재배치 (존재하는 것만)
-    savedIds.forEach(id => {
-      const node = idToNode.get(id);
-      if (node && parent.contains(node)) {
-        parent.appendChild(node); // append하면 기존 위치에서 이동
-      }
-    });
-
-
-    // 남은(저장에 없던) 항목들은 그대로 유지되게 둔다
-  }
-
-
-  // 모달 열기/닫기
-  function openOrderModal() { renderOrderList(); orderModal.classList.remove('hidden'); orderBackdrop.classList.remove('hidden'); }
-  function closeOrderModal() { orderModal.classList.add('hidden'); orderBackdrop.classList.add('hidden'); }
-
-
-  // 이벤트 바인딩
-  function bindUI() {
-    if (openOrderBtn) openOrderBtn.addEventListener('click', openOrderModal);
-    if (orderBackdrop) orderBackdrop.addEventListener('click', closeOrderModal);
-    if (cancelOrderBtn) cancelOrderBtn.addEventListener('click', closeOrderModal);
-    if (saveOrderBtn) saveOrderBtn.addEventListener('click', () => { saveOrder(); closeOrderModal(); });
-
-
-    // 페이지 로드시 저장된 순서가 있으면 처음에 적용
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw);
-        if (Array.isArray(saved) && saved.length) applySavedOrderToDOM(saved);
-      }
-    } catch (e) { console.warn('초기 순서 적용 실패', e); }
-  }
-
-
-  // init
-  document.addEventListener('DOMContentLoaded', () => {
-    bindUI();
-  });
-
-
-})();
 // ===== 초기화 =====
 loadState();
 render();

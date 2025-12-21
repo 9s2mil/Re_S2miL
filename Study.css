@@ -304,9 +304,9 @@ body.naming-open .namingPopup,body.naming-open .namingPopup *{ pointer-events:au
 }
 
 .movePopuTitle {
-  font-size: 16px;
+  font-size: 20px;
   margin-bottom: 10px;
-  font-weight: 700;
+  font-weight: bold;
   color: var(--primary);
 }
 
@@ -614,7 +614,13 @@ ruby rt {
 small {
   font-size: 0.45em;
   opacity: 0.8;
+  color: rgb(255, 0, 0);
+}
+
+/* 반전 모드 전용 */
+body.inverted-mode small {
   color: rgb(255, 213, 184);
+  /* 기존에 쓰시던 색 */
 }
 
 /* 하단 컨테이너 우측 상단의 폰트 버튼 */
@@ -628,13 +634,73 @@ small {
   /* 커튼보다 항상 위 */
 }
 
-.cur-bottom-font-controls .fontBtn {
-  background: #2C2323;
-  border: 2px solid var(--gold);
-  color: var(--gold);
-  border-radius: 8px;
-  width: 45px;
-  height: 45px;
-  font-size: 20px;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.25);
+.fontBt {
+  background-color: var(--surface) !important;
+}
+
+.topic-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.topic-row .topic {
+  flex: 1 0 auto;
+  width: 80%;
+  box-sizing: border-box;
+}
+#bookmarkBtn {
+  width: 80%;
+
+  margin-left: 11%;
+  display: block;
+}
+
+/* 업/다운 버튼 공통 */
+.topic-move {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+
+  background: linear-gradient(145deg,
+    #e0b94f 0%,
+    #fff6cf 50%,
+    #d1a63a 100%
+    );
+
+  box-shadow:
+    3px 3px 6px rgba(120, 90, 20, 0.35),
+    -3px -3px 6px rgba(255, 240, 190, 0.8);
+
+  border: none;
+  outline: none;
+
+  color: var(--scarlet-top);
+  font-size: 10px;
+  font-weight: 700;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+}
+
+/* 아이콘 미세 보정 (▲▼ 중앙 정렬용) */
+.topic-move.up {
+  padding-bottom: 2px;
+}
+
+.topic-move.down {
+  padding-top: 2px;
+}
+.placeholder{width:80%;margin-left: 11%}
+
+
+.setBtn {
+  width: 100%;
+  height: 50px;
+  margin-bottom: 8px;
+  background-color: #020545;
+  color: #fff;
+  font-weight: bold;
 }
