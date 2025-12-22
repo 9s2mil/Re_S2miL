@@ -7,6 +7,12 @@ const upBtn  = document.getElementById('upBtn');
 const toast  = document.getElementById('toast');
 const screen = document.getElementById('screen');
 
+const makerBtn = document.getElementById('makerBtn');
+const makerPopup = document.getElementById('makerPopup');
+const makerTextarea = document.getElementById('makerTextarea');
+const makerSaveBtn = document.getElementById('makerSaveBtn');
+const makerCloseBtn = document.getElementById('makerCloseBtn');
+
 const namingPopup = document.getElementById('namingPopup');
 const namingInput = document.getElementById('namingInput');
 const namingSave  = document.getElementById('namingSave');
@@ -155,6 +161,67 @@ function pickRandomInts(total, exclude, count) {
   return pool.slice(0, count);
 }
 
+function insertAtCursor(textarea, text) {
+  if (!textarea) return;
+
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const value = textarea.value;
+
+  textarea.value =
+    value.slice(0, start) +
+    text +
+    value.slice(end);
+
+  const pos = start + text.length;
+  textarea.setSelectionRange(pos, pos);
+  textarea.focus();
+}
+
+// 텍스트 삽입 버튼들 ([ ] ( ) @ ;)
+document.querySelectorAll('.insert-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    insertAtCursor(makerTextarea, btn.dataset.char);
+  });
+});
+
+if (makerBtn) {
+  makerBtn.addEventListener('click', () => {
+    makerPopup.style.display = 'flex';
+    document.body.classList.add('naming-open');
+  });
+}
+
+if (makerCloseBtn) {
+  makerCloseBtn.addEventListener('click', () => {
+    makerPopup.style.display = 'none';
+    document.body.classList.remove('naming-open');
+  });
+}
+
+makerSaveBtn.addEventListener('click', () => {
+  const text = makerTextarea.value || '';
+  if (!text.trim()) {
+    showToast('저장할 내용이 없습니다', 800);
+    return;
+  }
+
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'text.txt';
+  document.body.appendChild(a);
+  a.click();
+
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showToast('텍스트 파일로 저장되었습니다', 800);
+});
+
 function starOpen(startAtPos = 1) {
   starList = loadStarOrder(); // 눌린 순서대로
   if (!starList.length) { showToast('북마크된 항목이 없습니다', 1200); return; }
@@ -189,7 +256,8 @@ function renderStarCard() {
   const px = loadFont(t, i, starSide);
   starCard.style.fontSize = px ? `${px}px` : '';
 
-  starCard.innerHTML = text || '';
+  const flow = starCard.querySelector('.flip-text-flow');
+  flow.innerHTML = text || '';
 
   // 별 버튼 상태
   const on = isStarred(t, i);
@@ -305,6 +373,37 @@ function setStarAppearance(btn, on) {
   if (!btn) return;
   btn.textContent = on ? '★' : '☆';
   btn.style.color = on ? '#FFEB3B' : '';  // 켜짐=노란색, 꺼짐=기본색
+}
+
+function insertEmptyCardNext(topicId, currentIndex, mode) {
+  const cards = loadCards(topicId);
+  const insertAt = Math.min(cards.length, Math.max(0, currentIndex)); // index는 1-based
+  cards.splice(insertAt, 0, { f: '', b: '' });
+  saveCards(topicId, cards);
+
+  const nextIndex = insertAt + 1;
+
+  showToast('빈 페이지가 추가되었습니다', 800);
+
+  if (mode === 'flip') {
+    flipIndex = nextIndex;
+    flipSide = 'f';
+    flipIndexLabel.textContent = `${flipIndex} / ${cards.length}`;
+    renderFlipCard();
+  }
+
+  if (mode === 'curtain') {
+    curtainIndex = nextIndex;
+    curIndexLabel.textContent = `${curtainIndex} / ${cards.length}`;
+    renderCurtainCard();
+    ensureCurtainVisible();
+  }
+
+  if (mode === 'memory') {
+    memoryIndex = nextIndex;
+    memIndexLabel.textContent = `${memoryIndex} / ${cards.length}`;
+    renderMemoryCard();
+  }
 }
 
 // ===== 유틸 =====
@@ -515,14 +614,20 @@ function renderFlipCard() {
   if (!card) { flipCard.textContent = ''; return; }
 
   const text = (flipSide === 'b') ? card.b : card.f;
-  flipCard.innerHTML = text || '';
+  const flow = flipCard.querySelector('.flip-text-flow');
+  flow.innerHTML = text || '';
+
 
   // 폰트 사이즈 복원
   const saved = loadFont(currentTopicId, flipIndex, flipSide);  // (B)의 함수
   flipCard.style.fontSize = saved ? `${saved}px` : '';
   updateFlipStarButton();
 
+  const oldEdit = flipCard.querySelector('.edit-btn');
+  if (oldEdit) oldEdit.remove();
+
   addEditButton(flipCard, card, flipSide, flipIndex);
+  addLightningButton(flipCard);
 }
 // 카드 탭 → 앞/뒤 토글
 flipCard.addEventListener('click', () => {
@@ -585,7 +690,11 @@ flipMoveBtn.addEventListener('click', () => {
   openMovePopup(cards.length);
 });
 
-flipPlusBtn.addEventListener('click', () => { });
+flipPlusBtn.addEventListener('click', () => {
+  if (!currentTopicId) return;
+  insertEmptyCardNext(currentTopicId, flipIndex, 'flip');
+});
+
 
 flipStar.addEventListener('click', () => {
   const on = !isStarred(currentTopicId, flipIndex);
@@ -651,6 +760,7 @@ function renderCurtainCard() {
   curBottomText.style.fontSize = botPx ? `${botPx}px` : '';
   updateCurtainStarButton();
   addEditButton(curTopText, cards, 'f', curtainIndex);
+  addLightningButton(curTopText);
   addEditButton(curBottomText, cards, 'b', curtainIndex);
 }
 function ensureCurtainVisible() {
@@ -731,7 +841,10 @@ curOpacityBtn.addEventListener('click', () => {
 });
 
 // 자리만: s/a/hint/연필/☆는 후술
-curPlusBtn.addEventListener('click', () => { });
+curPlusBtn.addEventListener('click', () => {
+  if (!currentTopicId) return;
+  insertEmptyCardNext(currentTopicId, curtainIndex, 'curtain');
+});
 
 curStar.addEventListener('click', () => {
   const on = !isStarred(currentTopicId, curtainIndex);
@@ -826,6 +939,7 @@ function renderMemoryCard() {
 
   // ✏️ 수정 버튼 추가 (질문 부분에만)
   addEditButton(memQuestion, qCard, 'f', memoryIndex);
+  addLightningButton(memQuestion);
 
   // 보기 데이터 구성
   const correctIdx = memoryIndex; // 정답의 원본 인덱스
@@ -915,7 +1029,6 @@ function renderMemoryCard() {
     memOptions.appendChild(opt);
   });
 
-
   updateMemoryStarButton();
 }
 
@@ -953,7 +1066,10 @@ memMoveBtn.addEventListener('click', () => {
 });
 
 // 자리만
-memPlusBtn.addEventListener('click', () => { });
+memPlusBtn.addEventListener('click', () => {
+  if (!currentTopicId) return;
+  insertEmptyCardNext(currentTopicId, memoryIndex, 'memory');
+});
 
 memStar.addEventListener('click', () => {
   const on = !isStarred(currentTopicId, memoryIndex);
@@ -963,6 +1079,17 @@ memStar.addEventListener('click', () => {
   updateMemoryStarButton();
   showToast(on ? '북마크에 추가되었습니다' : '북마크에서 제거되었습니다', 600);
 });
+
+function handleLightningAction() {
+  document.body.classList.toggle('hide-ruby');
+
+  const hidden = document.body.classList.contains('hide-ruby');
+  showToast(
+    hidden ? '주석 숨김' : '주석 표시',
+    600
+  );
+}
+
 
 // ===== 렌더링 =====
 function clearWrap() {
@@ -1130,6 +1257,9 @@ upBtn.addEventListener('click', () => {
       // 3) 괄호 → <small> 변환
       text = text.replace(/\(([^()]+)\)/g, '<small>$1</small>');
       
+      // 4) 대괄호 → <span class="mini">
+      text = text.replace(/\[([^\[\]]+)\]/g, '<span class="mini">$1</span><br>');
+
       return text;
     }
 
@@ -1409,22 +1539,31 @@ function getCardCount(topicId) { const arr = (loadCards && loadCards(topicId)) |
 
 /* 오토 제어 오버레이 */
 function showAutoControls(mode) {
-  const root = getModeRoot(mode); if (!root) return;
-  if (!autoCtx.ui) {
-    const wrap = document.createElement('div');
-    wrap.className = 'auto-ctrls';
-    wrap.innerHTML = `
-      <button id="autoPauseBtn" class="btn">⏸ 중지</button>
-      <button id="autoStopBtn" class="btn">⏹ 정지</button>
-    `;
-    root.appendChild(wrap);
-    autoCtx.ui = wrap;
-    wrap.querySelector('#autoPauseBtn').addEventListener('click', autoPauseResume);
-    wrap.querySelector('#autoStopBtn').addEventListener('click', () => autoStop('user'));
+  const root = getModeRoot(mode);
+  if (!root) return;
+
+  // 🔥 이미 있으면 현재 root로 이동
+  if (autoCtx.ui) {
+    autoCtx.ui.remove();
   }
+
+  const wrap = document.createElement('div');
+  wrap.className = 'auto-ctrls';
+  wrap.innerHTML = `
+    <button id="autoPauseBtn" class="btn">⏸ 중지</button>
+    <button id="autoStopBtn" class="btn">⏹ 정지</button>
+  `;
+
+  root.appendChild(wrap);
+  autoCtx.ui = wrap;
+
+  wrap.querySelector('#autoPauseBtn').addEventListener('click', autoPauseResume);
+  wrap.querySelector('#autoStopBtn').addEventListener('click', () => autoStop('user'));
+
   updateAutoControls();
   autoCtx.ui.style.display = 'grid';
 }
+
 function hideAutoControls() { if (autoCtx.ui) autoCtx.ui.style.display = 'none'; }
 function updateAutoControls() {
   const btn = autoCtx.ui?.querySelector('#autoPauseBtn');
@@ -1452,11 +1591,21 @@ function autoPauseResume() {
 }
 function autoStop(reason) {
   if (!autoCtx.running) return;
-  clearTimeout(autoCtx.tm); autoCtx.tm = null; autoCtx.cb = null;
-  autoCtx.running = false; autoCtx.paused = false;
+
+  showAutoStopButton(autoCtx.mode, false); 
+
+  clearTimeout(autoCtx.tm);
+  autoCtx.tm = null;
+  autoCtx.cb = null;
+
+  autoCtx.running = false;
+  autoCtx.paused = false;
+
   hideAutoControls();
+
   if (reason === 'home') showToast('오토 모드를 종료했습니다', 900);
 }
+
 
 /* 커튼 표시/해제 */
 function setCurtainVisible(visible) {
@@ -1522,7 +1671,7 @@ function openAutoPrompt(mode) {
   _autoPopup.style.display = 'flex';
   document.body.classList.add('naming-open');
 
-  setTimeout(() => _autoInput.focus(), 0);
+  setTimeout(() => _autoInput.focus(), 0); //시작시 바로 키보드
 
   // 배경 클릭 닫기
   _autoPopup.onclick = (e) => {
@@ -1547,8 +1696,20 @@ function closeAutoPrompt() {
   document.body.classList.remove('naming-open');
 }
 
+function showAutoStopButton(mode, on) {
+  if (mode === 'flip') {
+    flipAutoBtn.style.display = on ? 'inline-flex' : '';
+  }
+  else if (mode === 'curtain') {
+    curAutoBtn.style.display = on ? 'inline-flex' : '';
+  }
+  else if (mode === 'memory') {
+    memAutoBtn.style.display = on ? 'inline-flex' : '';
+  }
+}
 
 function startAuto(mode, seconds) {
+  showAutoStopButton(mode, true);
   autoStop(); // 기존 오토 중지
 
   autoCtx.running = true;
@@ -1736,27 +1897,18 @@ let _hintCurText = '', _hintMode = null, _hintIndex = null;
 
 function ensureHintPopup() {
   if (_hintWrap) return;
-  _hintWrap = document.createElement('div');
-  _hintWrap.className = 'hintPopup';
-  _hintWrap.innerHTML = `
-    <div class="hintPopup__panel">
-      <button class="hintPopup__btn hintPopup__edit" title="편집" aria-label="편집">✏️</button>
-      <button class="hintPopup__btn hintPopup__close" title="닫기" aria-label="닫기">✕</button>
-      <div class="hintPopup__label"><br></div>
-      <div class="hintPopup__content" id="hintContent"></div>
-      <textarea class="hintPopup__textarea" id="hintTextarea" placeholder="힌트를 입력하세요"></textarea>
-    </div>`;
-  document.body.appendChild(_hintWrap);
+
+  _hintWrap = document.getElementById('hintPopup');
   _hintEditBtn = _hintWrap.querySelector('.hintPopup__edit');
   _hintCloseBtn = _hintWrap.querySelector('.hintPopup__close');
   _hintContent = _hintWrap.querySelector('#hintContent');
   _hintTextarea = _hintWrap.querySelector('#hintTextarea');
 
-  // 배경 클릭 시 닫기
-  _hintWrap.addEventListener('click', (e) => { if (e.target === _hintWrap) closeHintPopup(); });
+  _hintWrap.addEventListener('click', (e) => {
+    if (e.target === _hintWrap) closeHintPopup();
+  });
   _hintCloseBtn.addEventListener('click', closeHintPopup);
 
-  // 입력 중 자동 저장 (디바운스)
   let saveTimer = null;
   function saveNow() {
     setHint(currentTopicId, _hintIndex, _hintCurText, _hintTextarea.value);
@@ -1766,7 +1918,6 @@ function ensureHintPopup() {
     saveTimer = setTimeout(saveNow, 300);
   }
 
-  // ✏️ 편집 토글
   _hintEditBtn.addEventListener('click', () => {
     const editing = _hintTextarea.style.display !== 'none';
     if (!editing) {
@@ -1998,13 +2149,42 @@ function addEditButton(container, card, side, index) {
 
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
-    openEditPopup(index - 1, side); // index는 1-based이므로 -1
+
+    const currentIndex =
+      container === flipCard ? flipIndex :
+        container === curTopText || container === curBottomText ? curtainIndex :
+          memoryIndex;
+
+    openEditPopup(currentIndex - 1, side);
   });
 
   container.style.position = 'relative';
   container.appendChild(btn);
 }
 
+// ⚡ 버튼 추가 함수 (공통 동작)
+function addLightningButton(container) {
+  // 중복 방지
+  if (container.querySelector('.lightning-btn')) return;
+
+  const btn = document.createElement('button');
+  btn.textContent = '⚡';
+  btn.className = 'lightning-btn';
+  btn.style.position = 'absolute';
+  btn.style.left = '40px'; // 💎 바로 옆
+  btn.style.top = '8px';
+  btn.style.zIndex = '10';
+  btn.style.background = 'transparent';
+  btn.style.border = 'none';
+  btn.style.cursor = 'pointer';
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    handleLightningAction();
+  });
+
+  container.appendChild(btn);
+}
 
 // ⚙️ 설정 팝업 토글
 const profileBtn = document.querySelector(".fab");
@@ -2289,10 +2469,8 @@ function openMovePopup(max) {
   // 팝업 표시
   movePopup.style.display = 'flex';
 
-  // 모바일 키보드 자동 오픈
-  setTimeout(() => {
-    moveInput.focus();
-  }, 50);
+  // 모바일 키보드 자동 오픈 
+  setTimeout(() => { moveInput.focus(); }, 50);
 
   // 버튼에서 최대값 활용
   moveOk.dataset.max = max;

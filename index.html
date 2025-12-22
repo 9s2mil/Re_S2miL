@@ -19,6 +19,7 @@
 
       <!-- 중앙 주제 목록 -->
       <div id="topicWrap" class="topic-wrap">
+        <button id="makerBtn" class="btn slim">텍스트파일 제작</button>
         <button id="bookmarkBtn" class="btn slim">북마크</button>
         <div id="placeholder" class="placeholder">여기에 주제 버튼이 생성됩니다</div>
       </div>
@@ -41,7 +42,11 @@
         <button id="starFontMinus" class="chip">➖</button>
       </div>
     
-      <div id="starCard" class="flip-card" role="button" aria-label="카드 토글(앞/뒤)"></div>
+      <div id="starCard" class="flip-card" role="button" aria-label="카드 토글(앞/뒤)">
+        <div class="flip-text-flow">
+
+        </div>
+      </div>
     
       <div class="flip-bottom">
         <button id="starPrev" class="btn slim">◀</button>
@@ -94,7 +99,9 @@
     
       <!-- 카드 표시 영역 -->
       <div id="flipCard" class="flip-card" role="button" aria-label="카드 토글(앞/뒤)">
-        <!-- JS로 내용 주입 -->
+        <div class="flip-text-flow">
+          <!-- JS로 내용 주입 -->
+        </div>
       </div>
     
       <!-- 하단 네비 -->
@@ -210,6 +217,37 @@
     </div>
   </div>
 
+  <!-- 텍스트파일 제작 팝업 -->
+  <div id="makerPopup" class="makerPopup" style="display:none;">
+    <div class="namingPopup__panel maker-panel">
+      <div class="maker-title">텍스트파일 제작</div>
+      <!-- 헤더 (고정) -->
+      <div class="maker-header">
+        <div class="maker-header-left">
+          
+          <button class="maker-btn insert-btn" data-char=";">;</button>
+          <button class="maker-btn insert-btn" data-char="@">@</button>
+          <button class="maker-btn insert-btn" data-char="[">[</button>
+          <button class="maker-btn insert-btn" data-char="]">]</button>
+          <button class="maker-btn insert-btn" data-char="("> ( </button>
+          <button class="maker-btn insert-btn" data-char=")"> ) </button>
+          <button class="maker-btn" id="makerSaveBtn">저장</button>
+        </div>
+        <button id="makerCloseBtn" class="maker-close">✕</button>
+      </div>
+
+      <!-- 바디 (스크롤) -->
+    <div class="maker-body">
+      <div class="maker-input-wrap">
+        <textarea id="makerTextarea" class="maker-textarea"
+          placeholder="여기에 텍스트를 입력하세요"></textarea>
+      </div>
+    </div>
+
+    </div>
+  </div>  
+
+
   <!-- 설정 팝업 -->
   <div id="settingsPopup" class="popup settings-popup">
     <div class="popup-content">
@@ -312,6 +350,19 @@
         <button class="btn btn-primary" id="qysmAutoOk">시작</button>
       </div>
     </div>
+  </div>
+
+  <!-- Hint 팝업 -->
+  <div class="hintPopup" id="hintPopup" style="display:none;">
+    
+    <div class="hintPopup__panel">
+      <button class="hintPopup__btn hintPopup__edit" title="편집">✏️</button>
+      <button class="hintPopup__btn hintPopup__close" title="닫기">✕</button>
+      <div class="hintPopup__label"><br></div>
+      <div class="hintPopup__content" id="hintContent"></div>
+      <textarea class="hintPopup__textarea" id="hintTextarea" placeholder="힌트를 입력하세요"></textarea>
+    </div>
+
   </div>
 
   <!-- 토스트 -->
