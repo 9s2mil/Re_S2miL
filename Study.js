@@ -122,6 +122,8 @@ let memoryCorrect = 0;
 let starList = []; 
 let starPos = 1;   
 let starSide = 'f';
+const LIGHTNING_KEY = 'hideRubyMode';
+const PROGRESS_KEY = 'topicProgress';
 
 // ===== 로컬스토리지 키 =====
 const LS_TOPICS_KEY = 'qysm.topics';
@@ -546,24 +548,27 @@ if (homeBtn){
 // 디테일 → 플립
 if (detailFlipBtn) {
   detailFlipBtn.addEventListener('click', () => {
-    if (!currentTopicId) { showToast('토픽을 먼저 선택하세요', 1200); return; }
-    flipOpen(currentTopicId, 1, 'f');   // 1popup-1-f
+    if (!currentTopicId) return;
+    const idx = getTopicIndex(currentTopicId) || 1;
+    flipOpen(currentTopicId, idx, 'f');
   });
 }
 
 // 디테일 → 휘장
 if (detailCurtBtn) {
   detailCurtBtn.addEventListener('click', () => {
-    if (!currentTopicId) { showToast('토픽을 먼저 선택하세요', 1200); return; }
-    curtainOpen(currentTopicId, 1);     // 1popup-1 (top=t, under=b)
+    if (!currentTopicId) return;
+    const idx = getTopicIndex(currentTopicId) || 1;
+    curtainOpen(currentTopicId, idx);
   });
 }
 
 // 디테일 → 암기(자리만)
 if (detailMemoryBtn) {
   detailMemoryBtn.addEventListener('click', () => {
-    if (!currentTopicId) { showToast('토픽을 먼저 선택하세요', 1200); return; }
-    memoryOpen(currentTopicId, 1);
+    if (!currentTopicId) return;
+    const idx = getTopicIndex(currentTopicId) || 1;
+    memoryOpen(currentTopicId, idx);
   });
 }
 
@@ -662,6 +667,7 @@ flipPrev.addEventListener('click', () => {
   flipSide = 'f';
   flipIndexLabel.textContent = `${flipIndex} / ${cards.length}`;
   renderFlipCard();
+  saveTopicIndex(currentTopicId, flipIndex);
 });
 flipNext.addEventListener('click', () => {
   const cards = loadCards(currentTopicId);
@@ -676,6 +682,7 @@ flipNext.addEventListener('click', () => {
   flipSide = 'f';
   flipIndexLabel.textContent = `${flipIndex} / ${cards.length}`;
   renderFlipCard();
+  saveTopicIndex(currentTopicId, flipIndex);
 });
 
 
@@ -690,10 +697,8 @@ flipMoveBtn.addEventListener('click', () => {
   openMovePopup(cards.length);
 });
 
-flipPlusBtn.addEventListener('click', () => {
-  if (!currentTopicId) return;
-  insertEmptyCardNext(currentTopicId, flipIndex, 'flip');
-});
+flipPlusBtn.addEventListener('click', openPageMiniPopup);
+
 
 
 flipStar.addEventListener('click', () => {
@@ -784,6 +789,7 @@ curPrev.addEventListener('click', () => {
   curIndexLabel.textContent = `${curtainIndex} / ${cards.length}`;
   renderCurtainCard();
   ensureCurtainVisible();
+  saveTopicIndex(currentTopicId, curtainIndex);
 });
 curNext.addEventListener('click', () => {
   const cards = loadCards(currentTopicId);
@@ -797,6 +803,7 @@ curNext.addEventListener('click', () => {
   curIndexLabel.textContent = `${curtainIndex} / ${cards.length}`;
   renderCurtainCard();
   ensureCurtainVisible(); // 전환 시 휘장 반드시 보이게
+  saveTopicIndex(currentTopicId, curtainIndex);
 });
 
 
@@ -841,10 +848,7 @@ curOpacityBtn.addEventListener('click', () => {
 });
 
 // 자리만: s/a/hint/연필/☆는 후술
-curPlusBtn.addEventListener('click', () => {
-  if (!currentTopicId) return;
-  insertEmptyCardNext(currentTopicId, curtainIndex, 'curtain');
-});
+curPlusBtn.addEventListener('click', openPageMiniPopup);
 
 curStar.addEventListener('click', () => {
   const on = !isStarred(currentTopicId, curtainIndex);
@@ -1043,6 +1047,8 @@ memPrev.addEventListener('click', () => {
   memoryIndex = Math.max(1, memoryIndex - 1);
   memIndexLabel.textContent = `${memoryIndex} / ${cards.length}`;
   renderMemoryCard();
+  saveTopicIndex(currentTopicId, memoryIndex);
+
 });
 memNext.addEventListener('click', () => {
   const cards = loadCards(currentTopicId);
@@ -1055,6 +1061,7 @@ memNext.addEventListener('click', () => {
   memoryIndex = next;
   memIndexLabel.textContent = `${memoryIndex} / ${cards.length}`;
   renderMemoryCard();
+  saveTopicIndex(currentTopicId, memoryIndex);
 });
 
 // Move(m): 번호로 점프 (암기 모드)
@@ -1066,10 +1073,8 @@ memMoveBtn.addEventListener('click', () => {
 });
 
 // 자리만
-memPlusBtn.addEventListener('click', () => {
-  if (!currentTopicId) return;
-  insertEmptyCardNext(currentTopicId, memoryIndex, 'memory');
-});
+memPlusBtn.addEventListener('click', openPageMiniPopup);
+
 
 memStar.addEventListener('click', () => {
   const on = !isStarred(currentTopicId, memoryIndex);
@@ -1084,10 +1089,20 @@ function handleLightningAction() {
   document.body.classList.toggle('hide-ruby');
 
   const hidden = document.body.classList.contains('hide-ruby');
+
+  // ✅ 로컬 저장
+  localStorage.setItem(LIGHTNING_KEY, hidden ? '1' : '0');
+
   showToast(
     hidden ? '주석 숨김' : '주석 표시',
     600
   );
+}
+function restoreLightningState() {
+  const saved = localStorage.getItem(LIGHTNING_KEY);
+  if (saved === '1') {
+    document.body.classList.add('hide-ruby');
+  }
 }
 
 
@@ -1229,10 +1244,17 @@ upBtn.addEventListener('click', () => {
     const text = raw.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
 
     // 2) @ → \n 로 바꾸는 정규화 함수
-    const normalizeField = (s = '') =>
-      s.split('@')         
-        .map(p => p.trim()) 
-        .join('\n');  
+    const normalizeField = (s = '') => {
+      if (!s) return s;
+
+      // @. → 줄바꿈 + 투명 점
+      // @  → 일반 줄바꿈
+      return s
+        .replace(/@\./g, '\n<span class="transparent-dot">.</span>\n')
+        .split('@')
+        .map(p => p.trim())
+        .join('\n');
+    };
 
     // === 루비 간이 표기 변환기 ===
     function convertRubySyntax(text) {
@@ -1273,10 +1295,15 @@ upBtn.addEventListener('click', () => {
       const R = normalizeField(rightRaw);
 
       // 루비 자동 변환
-      const L2 = convertRubySyntax(L);
-      const R2 = convertRubySyntax(R);
+      let L2 = convertRubySyntax(L);
+      let R2 = convertRubySyntax(R);
+
+      // ✅ 자동 중앙 보정용 투명 줄 추가
+      L2 = autoAddTransparentDot(L2);
+      R2 = autoAddTransparentDot(R2);
 
       cards.push({ f: L2, b: R2 });
+
 
     }
 
@@ -1303,6 +1330,21 @@ upBtn.addEventListener('click', () => {
   input.click();
 });
 
+function autoAddTransparentDot(html) {
+  if (!html) return html;
+
+  // mini 또는 ruby가 포함되어 있으면
+  const hasMini = /class=["']mini["']/.test(html);
+  const hasRuby = /<ruby[\s>]/.test(html);
+
+  if (!hasMini && !hasRuby) return html;
+
+  // 이미 transparent-dot이 있으면 중복 방지
+  if (/transparent-dot/.test(html)) return html;
+
+  // 마지막에 줄 + 투명 점 추가
+  return html + '<br><span class="transparent-dot">.</span>';
+}
 
 if (cancelDeleteBtn){
   cancelDeleteBtn.addEventListener('click', () => {
@@ -1638,6 +1680,7 @@ function autoCycle() {
 
   if (mode === 'flip') {
     flipOpen(topicId, autoCtx.i, 'f');
+    saveTopicIndex(topicId, autoCtx.i);
     runTimer(autoCtx.mainMs, () => {
       flipOpen(topicId, autoCtx.i, 'b');
       runTimer(1000, () => { autoCtx.i++; autoCycle(); });
@@ -1645,6 +1688,7 @@ function autoCycle() {
   }
   else if (mode === 'curtain') {
     curtainOpen(topicId, autoCtx.i);
+    saveTopicIndex(topicId, autoCtx.i);
     setCurtainVisible(true);                        // u 가리기
     runTimer(autoCtx.mainMs, () => {
       setCurtainVisible(false);                     // 1초 노출
@@ -1653,6 +1697,7 @@ function autoCycle() {
   }
   else if (mode === 'memory') {
     memoryOpen(topicId, autoCtx.i);
+    saveTopicIndex(topicId, autoCtx.i);
     runTimer(autoCtx.mainMs, () => {
       clickMemoryCorrect(topicId, autoCtx.i);       // 정답 자동 선택
       runTimer(1000, () => { autoCtx.i++; autoCycle(); });
@@ -2483,6 +2528,14 @@ function closeMovePopup() {
 }
 moveCancel.addEventListener('click', closeMovePopup);
 
+if (movePopup) {
+  movePopup.addEventListener('click', (e) => {
+    if (e.target === movePopup) {
+      closeMovePopup();
+    }
+  });
+}
+
 moveOk.addEventListener('click', () => {
   const max = Number(moveOk.dataset.max);
   let n = Number(moveInput.value) || 1;
@@ -2540,7 +2593,142 @@ function applyMove(n) {
     renderCurtainCard();
     ensureCurtainVisible();
   }
+  saveTopicIndex(currentTopicId, n);
 }
+
+function loadTopicProgress() {
+  try {
+    return JSON.parse(localStorage.getItem(PROGRESS_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function getTopicIndex(topicId) {
+  const progress = loadTopicProgress();
+  return progress[topicId] ?? 0;
+}
+
+function saveTopicIndex(topicId, index) {
+  const progress = loadTopicProgress();
+  progress[topicId] = index;
+  localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+}
+
+let pageMiniPopup = null;
+
+function ensurePageMiniPopup() {
+  if (pageMiniPopup) return;
+
+  pageMiniPopup = document.createElement('div');
+  pageMiniPopup.id = 'pageMiniPopup';
+  pageMiniPopup.innerHTML = `
+    <div class="page-mini-panel">
+      <button class="page-mini-btn add">➕ 페이지 추가</button>
+      <button class="page-mini-btn del">➖ 페이지 삭제</button>
+    </div>
+  `;
+
+  document.body.appendChild(pageMiniPopup);
+
+  // 바깥 클릭 → 닫기
+  pageMiniPopup.addEventListener('click', (e) => {
+    if (e.target === pageMiniPopup) closePageMiniPopup();
+  });
+
+  // 버튼 연결
+  pageMiniPopup.querySelector('.add').addEventListener('click', () => {
+    closePageMiniPopup();
+    runInsertCurrentPage();
+  });
+
+  pageMiniPopup.querySelector('.del').addEventListener('click', () => {
+    closePageMiniPopup();
+    runDeleteCurrentPage();
+  });
+}
+
+function openPageMiniPopup() {
+  ensurePageMiniPopup();
+  pageMiniPopup.style.display = 'flex';
+  document.body.classList.add('naming-open');
+}
+
+function closePageMiniPopup() {
+  if (!pageMiniPopup) return;
+  pageMiniPopup.style.display = 'none';
+  document.body.classList.remove('naming-open');
+}
+
+function runInsertCurrentPage() {
+  if (!currentTopicId) return;
+
+  if (flipScreen.style.display !== 'none') {
+    insertEmptyCardNext(currentTopicId, flipIndex, 'flip');
+  }
+  else if (curtainScreen.style.display !== 'none') {
+    insertEmptyCardNext(currentTopicId, curtainIndex, 'curtain');
+  }
+  else if (memoryScreen.style.display !== 'none') {
+    insertEmptyCardNext(currentTopicId, memoryIndex, 'memory');
+  }
+}
+
+function runDeleteCurrentPage() {
+  if (!currentTopicId) return;
+
+  const cards = loadCards(currentTopicId);
+  if (!cards.length) return;
+
+  let idx, mode;
+
+  if (flipScreen.style.display !== 'none') {
+    idx = flipIndex; mode = 'flip';
+  }
+  else if (curtainScreen.style.display !== 'none') {
+    idx = curtainIndex; mode = 'curtain';
+  }
+  else if (memoryScreen.style.display !== 'none') {
+    idx = memoryIndex; mode = 'memory';
+  } else return;
+
+  // 1-based → 0-based
+  cards.splice(idx - 1, 1);
+
+  if (!cards.length) {
+    saveCards(currentTopicId, []);
+    saveTopicIndex(currentTopicId, 0);
+    showToast('마지막 페이지가 삭제되었습니다', 1200);
+    return;
+  }
+
+  const nextIndex = Math.min(idx, cards.length);
+  saveCards(currentTopicId, cards);
+  saveTopicIndex(currentTopicId, nextIndex);
+
+  // 모드별 반영
+  if (mode === 'flip') {
+    flipIndex = nextIndex;
+    flipIndexLabel.textContent = `${flipIndex} / ${cards.length}`;
+    renderFlipCard();
+  }
+  else if (mode === 'curtain') {
+    curtainIndex = nextIndex;
+    curIndexLabel.textContent = `${curtainIndex} / ${cards.length}`;
+    renderCurtainCard();
+    ensureCurtainVisible();
+  }
+  else if (mode === 'memory') {
+    memoryIndex = nextIndex;
+    memIndexLabel.textContent = `${memoryIndex} / ${cards.length}`;
+    renderMemoryCard();
+  }
+
+  showToast('현재 페이지가 삭제되었습니다', 900);
+}
+
+
+
 
 // ===== 초기화 =====
 loadState();
@@ -2550,4 +2738,5 @@ document.getElementById('curBottomText')?.classList.add('cur-text');
 window.addEventListener("DOMContentLoaded", () => {
   const savedState = localStorage.getItem("invertedMode") === "true";
   if (savedState) document.body.classList.add("inverted-mode");
+  restoreLightningState();
 });

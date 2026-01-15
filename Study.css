@@ -1735,7 +1735,6 @@ body.naming-open .namingPopup * {
 /* 루비 크기/라인: 비율 고정(버튼 연동) — 전역 한 번만 선언 */
 ruby rt {
   font-size: 0.55em;
-  /* 필요 시 0.50~0.65em 조정 */
   line-height: 1;
 }
 
@@ -1748,8 +1747,7 @@ small {
 .mini {
   font-size: 0.35em;
   opacity: 0.8;
-  vertical-align: baseline;
-  letter-spacing: -0.06em;
+
 }
 
 /* ⚡ 루비 + 미니 숨김 토글 */
@@ -1939,3 +1937,64 @@ body.inverted-mode small {
    border-color: var(--gold);
    box-shadow: 0 0 0 2px rgba(226, 190, 58, 0.25) inset;
  }
+
+ .transparent-dot {
+   opacity: 0;
+   user-select: none;
+   pointer-events: none;
+ }
+
+#pageMiniPopup {
+  position: fixed;
+  inset: 0;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.35);
+  /* 살짝 더 어둡게 */
+  z-index: 9999;
+  /* 🔥 최상단 보장 */
+}
+
+.page-mini-panel {
+  background: #3B2E2E;
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: grid;
+  gap: 16px;
+  min-width: 140px;
+  /* 🔹 더 작게 */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  animation: pageMiniPop 0.12s ease-out;
+}
+
+.page-mini-btn {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.page-mini-btn.add {
+  background: #444;
+  color: #fff;
+}
+
+.page-mini-btn.del {
+  background: #7a2424;
+  color: #fff;
+}
+
+/* 팝업 등장 애니메이션 (가볍게) */
+@keyframes pageMiniPop {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
