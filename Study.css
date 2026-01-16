@@ -1747,7 +1747,8 @@ small {
 .mini {
   font-size: 0.35em;
   opacity: 0.8;
-
+  vertical-align: baseline;
+  letter-spacing: -0.06em;
 }
 
 /* ⚡ 루비 + 미니 숨김 토글 */
@@ -1997,4 +1998,9 @@ body.inverted-mode small {
     transform: scale(1);
     opacity: 1;
   }
+}
+
+.mem-text-flow {
+  width: 100%;
+  text-align: center;
 }

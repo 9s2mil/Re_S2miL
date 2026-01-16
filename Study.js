@@ -894,7 +894,10 @@ function renderMemoryCard() {
   const qCard = cards[memoryIndex - 1] || { f: '', b: '' };
 
   // 질문 = f (xpopup-i-q)
-  memQuestion.innerHTML = qCard.f || '';
+  const flow = memQuestion.querySelector('.mem-text-flow');
+  if (flow) {
+    flow.innerHTML = qCard.f || '';
+  }
 
   // === 질문 폰트 조절 버튼 세트 추가 ===
   let qFontControls = document.getElementById('memQFontControls');
@@ -2726,6 +2729,7 @@ function runDeleteCurrentPage() {
 
   showToast('현재 페이지가 삭제되었습니다', 900);
 }
+
 
 
 
