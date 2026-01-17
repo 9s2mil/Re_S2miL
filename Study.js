@@ -893,12 +893,11 @@ function renderMemoryCard() {
   const total = cards.length;
   const qCard = cards[memoryIndex - 1] || { f: '', b: '' };
 
-  // 질문 = f (xpopup-i-q)
   const flow = memQuestion.querySelector('.mem-text-flow');
   if (flow) {
     flow.innerHTML = qCard.f || '';
   }
-
+  
   // === 질문 폰트 조절 버튼 세트 추가 ===
   let qFontControls = document.getElementById('memQFontControls');
   if (!qFontControls) {
@@ -926,25 +925,33 @@ function renderMemoryCard() {
     // 폰트 조절 기능
     qPlus.addEventListener('click', (e) => {
       e.stopPropagation();
-      const cur = parseFloat(getComputedStyle(memQuestion).fontSize);
+
+      const cur = parseFloat(getComputedStyle(flow).fontSize);
       const next = Math.min((cur || 22) + 2, 96);
-      memQuestion.style.fontSize = `${next}px`;
+
+      flow.style.fontSize = `${next}px`;
       saveFont(currentTopicId, memoryIndex, 'q', next);
     });
+
     qMinus.addEventListener('click', (e) => {
       e.stopPropagation();
-      const cur = parseFloat(getComputedStyle(memQuestion).fontSize);
+
+      const cur = parseFloat(getComputedStyle(flow).fontSize);
       const next = Math.max((cur || 22) - 2, 10);
-      memQuestion.style.fontSize = `${next}px`;
+
+      flow.style.fontSize = `${next}px`;
       saveFont(currentTopicId, memoryIndex, 'q', next);
     });
+
   }
 
   // 저장된 폰트 크기 복원
   const qPx = loadFont(currentTopicId, memoryIndex, 'q');
-  if (qPx) memQuestion.style.fontSize = `${qPx}px`;
+  if (flow) {
+    flow.style.fontSize = qPx ? `${qPx}px` : '';
+  }
 
-  // ✏️ 수정 버튼 추가 (질문 부분에만)
+  // ✏️ 수정 / ⚡ 버튼
   addEditButton(memQuestion, qCard, 'f', memoryIndex);
   addLightningButton(memQuestion);
 
