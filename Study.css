@@ -15,6 +15,7 @@
   --scarlet-bot: #8C0F0F;
   --content-serif: "Noto Serif KR", "Noto Serif CJK KR", serif;
   --content-font: 3em;
+  --app-font: "Pretendard", "Noto Sans KR", system-ui, sans-serif;
 }
 
 /* === Base & layout === */
@@ -31,8 +32,8 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: "Pretendard", "Noto Sans KR", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  -webkit-tap-highlight-color: transparent
+  font-family: var(--app-font);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .app {
@@ -1492,13 +1493,15 @@ body.naming-open .namingPopup * {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: var(--surface-2, #f5ebe2);
-  border: 3px solid var(--line, #d4af37);
-  box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.4);
-  border-radius: 12px;
+  background: #E8E1D6;
+  border: 3px solid #d4af37;
+  box-shadow:
+      0 20px 40px rgba(0, 0, 0, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border-radius: 18px;
+  padding: 18px 16px 16px;
   z-index: 2000;
   display: none;
-  padding: 20px;
   width: 260px;
   text-align: center;
 }
@@ -1509,7 +1512,11 @@ body.naming-open .namingPopup * {
 }
 
 .settings-popup h2 {
-  margin-bottom: 15px;
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #3E342B;
+  text-align: left;
 }
 
 .settings-popup .btn {
@@ -1530,6 +1537,41 @@ body.naming-open .namingPopup * {
   background: #444;
 }
 
+
+/* 설정 버튼 = 옵션 행 */
+.settings-popup .setBtn {
+  all: unset;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+  height: 52px;
+  padding: 0 14px;
+  margin-bottom: 10px;
+
+  background: #F6F2EC;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+
+  font-size: 14px;
+  font-weight: 600;
+  color: #2F2A25;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 2px 4px rgba(0, 0, 0, 0.08);
+
+  cursor: pointer;
+  transition: transform .08s ease, box-shadow .08s ease, background .08s ease;
+}
+
+/* 마지막 버튼 여백 제거 */
+.settings-popup .setBtn:last-child {
+  margin-bottom: 0;
+}
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -2003,4 +2045,66 @@ body.inverted-mode small {
 .mem-text-flow {
   width: 100%;
   text-align: center;
+}
+
+/* ===== 앱 전체 텍스트 폰트 강제 통일 ===== */
+body,
+button,
+input,
+textarea,
+select,
+
+/* 기본 텍스트 태그 */
+div,
+span,
+p,
+b,
+strong,
+em,
+i,
+small,
+label,
+li,
+dt,
+dd,
+th,
+td,
+
+/* 공통 UI */
+.btn,
+.chip,
+.input-like,
+.topic,
+.topic__name,
+
+/* 카드 / 플립 / 휘장 */
+.flip-card,
+.flip-text-flow,
+.cur-text,
+.cur-top,
+.cur-bottom,
+
+/* 암기(퀴즈) */
+.mem-q,
+.mem-text-flow,
+.mem-options,
+.mem-options *,
+
+/* 북마크 */
+#starCard,
+#starCard *,
+
+/* 디테일 / 헤더 */
+.flip-header,
+.hometext,
+.flip-meta,
+.detail-wrap,
+.detail-wrap *,
+
+/* 팝업 */
+.popup,
+.popup-content,
+.popup-content * {
+
+  font-family: var(--app-font) !important;
 }

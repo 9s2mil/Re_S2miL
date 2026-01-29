@@ -2736,10 +2736,121 @@ function runDeleteCurrentPage() {
 
   showToast('현재 페이지가 삭제되었습니다', 900);
 }
+// ===============================
+// 사용자 폰트 전체 처리 (단일 코드)
+// ===============================
 
+// ---- IndexedDB 설정 ----
+const FONT_DB_NAME = 'user-font-db';
+const FONT_STORE_NAME = 'fonts';
+const FONT_STORE_KEY = 'custom-font';
 
+// ---- DB 열기 ----
+function openFontDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(FONT_DB_NAME, 1);
 
+    req.onupgradeneeded = () => {
+      if (!req.result.objectStoreNames.contains(FONT_STORE_NAME)) {
+        req.result.createObjectStore(FONT_STORE_NAME);
+      }
+    };
 
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// ---- DB 저장 ----
+async function saveFontToDB(buffer, type) {
+  const db = await openFontDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(FONT_STORE_NAME, 'readwrite');
+    tx.objectStore(FONT_STORE_NAME).put({ buffer, type }, FONT_STORE_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// ---- DB 불러오기 ----
+async function loadFontFromDB() {
+  try {
+    const db = await openFontDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(FONT_STORE_NAME, 'readonly');
+      const req = tx.objectStore(FONT_STORE_NAME).get(FONT_STORE_KEY);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => resolve(null);
+    });
+  } catch {
+    return null;
+  }
+}
+
+// ---- 실제 폰트 적용 ----
+function applyUserFont(blob) {
+  const url = URL.createObjectURL(blob);
+
+  const oldStyle = document.getElementById('userFontStyle');
+  if (oldStyle) oldStyle.remove();
+
+  const style = document.createElement('style');
+  style.id = 'userFontStyle';
+  style.textContent = `
+    @font-face {
+      font-family: 'UserCustomFont';
+      src: url('${url}');
+      font-display: swap;
+    }
+    :root {
+      --app-font: 'UserCustomFont', "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+// ---- 설정 팝업: 폰트 선택 버튼 ----
+const popupFontBtn = document.getElementById('popupFontBtn');
+
+if (popupFontBtn) {
+  popupFontBtn.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.ttf,.otf';
+
+    input.onchange = async () => {
+      const file = input.files[0];
+      if (!file) return;
+
+      const buffer = await file.arrayBuffer();
+      const blob = new Blob([buffer], { type: file.type });
+
+      // 즉시 적용
+      applyUserFont(blob);
+
+      // 저장
+      await saveFontToDB(buffer, file.type);
+      localStorage.setItem('userFontEnabled', '1');
+
+      if (typeof showToast === 'function') {
+        showToast('사용자 폰트가 적용되었습니다', 1200);
+      }
+    };
+
+    input.click();
+  });
+}
+
+// ---- 앱 시작 시 자동 복원 ----
+(async function restoreUserFontOnStart() {
+  if (localStorage.getItem('userFontEnabled') !== '1') return;
+
+  const saved = await loadFontFromDB();
+  if (!saved) return;
+
+  const blob = new Blob([saved.buffer], { type: saved.type });
+  applyUserFont(blob);
+})();
 
 // ===== 초기화 =====
 loadState();
