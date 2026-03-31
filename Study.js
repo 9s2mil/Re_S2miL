@@ -2256,6 +2256,20 @@ document.addEventListener("click", (e) => {
   }
 });
 
+// 도움말 팝업 열기
+const popupGuideBtn = document.getElementById("popupGuideBtn");
+const guidePopup = document.getElementById("guidePopup");
+
+popupGuideBtn.addEventListener("click", () => {
+  guidePopup.classList.toggle("active");
+});
+
+document.addEventListener("click", (e) => {
+  if (!guidePopup.contains(e.target) && !popupGuideBtn.contains(e.target)) {
+    guidePopup.classList.remove("active");
+  }
+});
+
 // 🔄 리셋 버튼
 document.getElementById("popupResetBtn").addEventListener("click", () => {
   if (confirm("정말 모든 데이터를 초기화할까요?")) {

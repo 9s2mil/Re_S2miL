@@ -253,11 +253,33 @@
   <div id="settingsPopup" class="popup settings-popup">
     <div class="popup-content">
       <h2>⚙️ 설정</h2>
+      <button id="popupGuideBtn" class="setBtn">🤔 도움말</button>
       <button id="popupResetBtn" class="setBtn">🔄 모든 데이터 초기화</button>
       <button id="popupInvertBtn" class="setBtn">☯ 색 반전 모드</button>
       <button id="popupStorageBtn" class="setBtn">💾 로컬 사용량 확인</button>
       <button id="popupBackupBtn" class="setBtn">📄 TXT파일 추출</button>
       <button id="popupFontBtn" class="setBtn">✍️ 사용자 폰트 변경</button>
+    </div>
+  </div>
+
+  <!-- 도움말 팝업 -->
+  <div id="guidePopup" class="popup settings-popup">
+    <div class="popup-content">
+      <h2>🤔 도움말</h2>
+        <h5>
+          ; = 카드분리
+          <br><br>
+          @ = 줄바꿈 기호
+          <br><br>
+          {漢字|한자} = <ruby>漢字<rt>한자</rt></ruby>
+          <br><br>
+          주^술 = <ruby>주<rt>술</rt></ruby>
+          <br><br>
+          (설명) = <small>설명</small>
+          <br><br>
+          [보조설명] = <span class="mini">주석설명(줄바꿈)</span>
+          <br>
+        </h5>
     </div>
   </div>
 
