@@ -376,11 +376,9 @@
 
   <script src="Study.js"></script>
 <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./service-worker.js')
-      .then(reg => console.log("SW 등록 성공:", reg))
-      .catch(err => console.error("SW 등록 실패:", err));
-  }
+  navigator.serviceWorker.register('/Re_S2miL/service-worker.js', {
+    scope: '/Re_S2miL/'
+  });
 </script>
 </body>
 </html>
