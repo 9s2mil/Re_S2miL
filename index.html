@@ -376,9 +376,11 @@
 
   <script src="Study.js"></script>
 <script>
-  navigator.serviceWorker.register('/Re_S2miL/service-worker.js', {
-    scope: '/Re_S2miL/'
-  });
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/Re_S2miL/service-worker.js', {
+      scope: '/Re_S2miL/'
+    });
+  }
 </script>
 </body>
 </html>
