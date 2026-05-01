@@ -6,7 +6,6 @@ const FILES_TO_CACHE = [
   BASE + "manifest.json",
   BASE + "Study.css",
   BASE + "Study.js",
-  BASE + "title.js",
   BASE + "icons/icon-192.png",
   BASE + "icons/icon-512.png"
 ];
@@ -54,10 +53,25 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
+  const url = new URL(req.url);
 
   event.respondWith(
     caches.match(req).then((cached) => {
-      return cached || fetch(req);
+      if (cached) return cached;
+
+      return fetch(req).catch(() => {
+        // 🔥 핵심: SPA/루트 fallback
+        if (req.mode === "navigate") {
+          return caches.match("/Re_S2miL/index.html");
+        }
+
+        // manifest 같은 것 fallback
+        if (url.pathname.endsWith("manifest.json")) {
+          return caches.match("/Re_S2miL/manifest.json");
+        }
+
+        return undefined;
+      });
     })
   );
 });
