@@ -1,4 +1,4 @@
-const CACHE_NAME = "note-cache-v6";
+const CACHE_NAME = "note-cache-v90";
 const BASE = "/Re_S2miL/";
 
 const FILES_TO_CACHE = [
@@ -52,6 +52,9 @@ self.addEventListener("activate", (e) => {
 });
 
 self.addEventListener("fetch", (event) => {
+  // 🔥 외부 요청은 건드리지 않음 (Google Fonts 등)
+  if (!event.request.url.startsWith(self.location.origin)) return;
+
   const req = event.request;
   const BASE = "/Re_S2miL/";
 
@@ -59,11 +62,17 @@ self.addEventListener("fetch", (event) => {
     caches.match(req).then((cached) => {
       if (cached) return cached;
 
-      return fetch(req).catch(() => {
+      return fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+        return res;
+      }).catch(() => {
+        // ⭐ 오프라인일 때 "문서"만 index.html로 대체
         if (req.mode === "navigate") {
           return caches.match(BASE + "index.html");
         }
-        return new Response("", { status: 404 });
+
+        // ❗ 나머지는 그냥 실패하도록 둠 (404 응답 생성 금지)
       });
     })
   );
