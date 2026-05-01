@@ -53,24 +53,17 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  const url = new URL(req.url);
+  const BASE = "/Re_S2miL/";
 
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;
 
       return fetch(req).catch(() => {
-        // 🔥 핵심: SPA/루트 fallback
         if (req.mode === "navigate") {
-          return caches.match("/Re_S2miL/index.html");
+          return caches.match(BASE + "index.html");
         }
-
-        // manifest 같은 것 fallback
-        if (url.pathname.endsWith("manifest.json")) {
-          return caches.match("/Re_S2miL/manifest.json");
-        }
-
-        return undefined;
+        return new Response("", { status: 404 });
       });
     })
   );
