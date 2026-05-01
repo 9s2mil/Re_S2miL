@@ -375,12 +375,20 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="Study.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js')
-        .then(reg => console.log("SW 등록 성공:", reg))
-        .catch(err => console.error("SW 등록 실패:", err));
-    }
-  </script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js', {
+        scope: './'
+      })
+        .then(reg => {
+          console.log("SW 등록 성공:", reg.scope);
+        })
+        .catch(err => {
+          console.error("SW 등록 실패:", err);
+        });
+    });
+  }
+</script>
 </body>
 </html>

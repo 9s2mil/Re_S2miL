@@ -1,15 +1,31 @@
+self.addEventListener("install", (e) => {
+  console.log("SW install 시작됨");
+  e.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((c) => {
+        console.log("캐시 오픈 성공");
+        return c.addAll(FILES_TO_CACHE);
+      })
+      .catch((err) => {
+        console.error("캐시 실패:", err);
+        throw err;
+      })
+  );
+});
+
 // ① 캐시 이름 변경 (강제 갱신)
 const CACHE_NAME = "note-cache-v5";
 
-// ② 캐시 목록은 최신 파일로 (title-5.json 포함)
+// ② 캐시 목록은 최신 파일로
 const FILES_TO_CACHE = [
-  "index.html",
-  "manifest.json",
-  "Study.css",
-  "Study.js",
-  "title.js",
-  "icons/icon-192.png",
-  "icons/icon-512.png"
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./Study.css",
+  "./Study.js",
+  "./title.js",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png"
 ];
 
 /* =========================
