@@ -16,9 +16,25 @@ self.addEventListener("install", (e) => {
   self.skipWaiting();
 
   e.waitUntil(
-    caches.open(CACHE_NAME).then((c) => {
+    caches.open(CACHE_NAME).then(async (cache) => {
       console.log("캐시 오픈");
-      return c.addAll(FILES_TO_CACHE);
+
+      for (const url of FILES_TO_CACHE) {
+        try {
+          const res = await fetch(url, { cache: "no-cache" });
+
+          if (!res || !res.ok) {
+            console.warn("캐시 실패(무시):", url);
+            continue;
+          }
+
+          await cache.put(url, res);
+          console.log("캐시 성공:", url);
+
+        } catch (err) {
+          console.warn("네트워크 실패(무시):", url);
+        }
+      }
     })
   );
 });
